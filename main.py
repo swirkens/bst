@@ -1,24 +1,24 @@
 from tkinter import *
 from tree import Node
-from tree import Drzewo
+from tree import BST
 
-drzewo = Drzewo()
+b = BST()
 
 def scroll_start(event):
     canvas.scan_mark(event.x, event.y)
 
 def scroll_move(event):
     canvas.scan_dragto(event.x, event.y, gain=1)
-    moveGUIback()
+    moveUIback()
 
-def moveGUIback():
-    przyciskDodaj.place(x=130, y=30)
-    pole.place(x=50, y=30)
+def moveUIback():
+    insertButton.place(x=130, y=30)
+    entryField.place(x=50, y=30)
 
 def clicked() :
-    wartosc = pole.get()
-    if wartosc != '':
-        drzewo.dodaj(drzewo.korzen, int(wartosc), canvas)
+    value = entryField.get()
+    if value != '':
+        b.insert(b.root, int(value), canvas)
 
 
 canvas = Canvas(width=600, height=600, bg='white')   
@@ -26,14 +26,14 @@ canvas.pack(expand=YES, fill=BOTH)
 canvas.bind("<ButtonPress-1>", scroll_start)
 canvas.bind("<B1-Motion>", scroll_move)
 
-przyciskDodaj = Button(canvas, text ="Dodaj", command = clicked)
-przyciskDodaj.pack()
+insertButton = Button(canvas, text ="Dodaj", command = clicked)
+insertButton.pack()
 
-pole = Entry(canvas, width = 10, bd = 5)
-pole.pack()
+entryField = Entry(canvas, width = 10, bd = 5)
+entryField.pack()
 
-canvas.create_window(60, 30, window = pole)
-canvas.create_window(130,30, window = przyciskDodaj)
-moveGUIback()
+canvas.create_window(60, 30, window = entryField)
+canvas.create_window(130,30, window = insertButton)
+moveUIback()
 
 mainloop()

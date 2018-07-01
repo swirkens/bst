@@ -1,70 +1,70 @@
 class Node:
-    def __init__(self, ojciec, wartosc, lewySyn, prawySyn):
-        self.ojciec = ojciec
-        self.wartosc = wartosc
-        self.lewySyn = lewySyn
-        self.prawySyn = prawySyn
+    def __init__(self, parent, value, left, right):
+        self.parent = parent
+        self.value = value
+        self.left = left
+        self.right = right
         self.center = None
 
-class Drzewo:
+class BST:
     def __init__(self):
-        self.korzen = None
+        self.root = None
         self.min = None
         self.max = None
 
-    def przesun(self, n, wartosc):
-        if wartosc < n.wartosc: self.przesunLewo(n.lewySyn, wartosc)
-        else: self.przesunPrawo(n.prawySyn, wartosc)
+    def move(self, n, value):
+        if value < n.value: self.moveLeft(n.left, value)
+        else: self.moveRight(n.right, value)
 
-    def przesunLewo(self, n, wartosc):
+    def moveLeft(self, n, value):
         if n:
-            self.przesunLewo(n.lewySyn, wartosc)
-            self.przesunLewo(n.prawySyn, wartosc)
-            if wartosc > n.wartosc:
+            self.moveLeft(n.left, value)
+            self.moveLeft(n.right, value)
+            if value > n.value:
                 n.center[0] -= 40
 
-    def przesunPrawo(self, n, wartosc):
+    def moveRight(self, n, value):
         if n:
-            self.przesunPrawo(n.lewySyn, wartosc)
-            self.przesunPrawo(n.prawySyn, wartosc)
-            if wartosc < n.wartosc:
+            self.moveRight(n.left, value)
+            self.moveRight(n.right, value)
+            if value < n.value:
                 n.center[0] += 40     
 
-    def rysuj(self, n, canvas):
+    def draw(self, n, canvas):
         if n:
-            self.rysuj(n.lewySyn, canvas)
-            self.rysuj(n.prawySyn, canvas)
-            if n.ojciec:
-                parentCenter = n.ojciec.center
+            self.draw(n.left, canvas)
+            self.draw(n.right, canvas)
+            if n.parent:
+                parentCenter = n.parent.center
                 canvas.create_line(n.center[0],n.center[1],parentCenter[0],parentCenter[1], width=2)
             canvas.create_oval(n.center[0]-20,n.center[1]-20,n.center[0]+20,n.center[1]+20,fill='green', width=2)
-            canvas.create_text(n.center[0],n.center[1],text=n.wartosc)
+            canvas.create_text(n.center[0],n.center[1],text=n.value)
 
-    def dodaj(self, n, wartosc, canvas):
+    def insert(self, n, value, canvas):
         if n is None:
-            n = Node(None, wartosc, None, None)
-            self.korzen = n
-            self.min = wartosc
-            self.max = wartosc
+            n = Node(None, value, None, None)
+            self.root = n
+            self.min = value
+            self.max = value
             n.center = [300, 50]
-            self.rysuj(self.korzen, canvas)
+            self.draw(self.root, canvas)
         else:
-            if wartosc < n.wartosc and n.lewySyn is None:
-                n.lewySyn = Node(n, wartosc, None, None)
+            if value < n.value and n.left is None:
+                n.left = Node(n, value, None, None)
                 parentCenter = n.center
-                n.lewySyn.center = [parentCenter[0]-40, parentCenter[1]+40]
-                if wartosc < self.min: self.min = wartosc
-                else: self.przesunLewo(self.korzen, wartosc)
+                n.left.center = [parentCenter[0]-40, parentCenter[1]+40]
+                if value < self.min: self.min = value
+                else: self.moveLeft(self.root, value)
                 canvas.delete('all')
-                self.rysuj(self.korzen, canvas)
-            elif wartosc >= n.wartosc and n.prawySyn is None:
-                n.prawySyn = Node(n, wartosc, None, None)
+                self.draw(self.root, canvas)
+            elif value >= n.value and n.right is None:
+                n.right = Node(n, value, None, None)
                 parentCenter = n.center
-                n.prawySyn.center = [parentCenter[0]+40, parentCenter[1]+40]
-                if wartosc > self.max: self.max = wartosc
-                else: self.przesunPrawo(self.korzen, wartosc)
+                n.right.center = [parentCenter[0]+40, parentCenter[1]+40]
+                if value > self.max: self.max = value
+                else: self.moveRight(self.root, value)
                 canvas.delete('all')
-                self.rysuj(self.korzen, canvas)
+                self.draw(self.root, canvas)
             else:
-                if wartosc < n.wartosc: self.dodaj(n.lewySyn, wartosc, canvas)
-                else: self.dodaj(n.prawySyn, wartosc, canvas)
+                if value < n.value: self.insert(n.left, value, canvas)
+                else: self.insert(n.right, value, canvas)
