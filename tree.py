@@ -19,9 +19,13 @@ class BST:
         self.root = None
         self.min = None
         self.max = None
+        self.animationSpeed = 500
     
+    def setAnimationSpeed(self, speed):
+        self.animationSpeed = speed
+
     def animationStep(self, node, color, msg):
-        self.canvas.itemconfigure(node.oval, fill=color)
+        if node: self.canvas.itemconfigure(node.oval, fill=color)
         if msg: self.msgFunction(msg)
         self.canvas.update()
 
@@ -66,21 +70,21 @@ class BST:
                 self.canvas.move(n.oval, 40, 0)
                 self.canvas.move(n.text, 40, 0)
 
-    def insert(self, n, value, canvas):
+    def insert(self, n, value):
         if n is None:
             center = [300, 50]
-            n = Node(None, value, center, canvas)
+            n = Node(None, value, center, self.canvas)
             self.root = n
             self.min = value
             self.max = value
 
-            canvas.after(500, self.animationStep(n, 'blue', 'Creating root node'))
-            canvas.after(500, self.animationStep(n, 'green', ''))
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'blue', 'Creating root node'))
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
         else:
             if value < n.value and n.left is None:
-                canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
+                self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
                 center = [n.center[0]-40, n.center[1]+40]
-                n.left = Node(n, value, center, canvas)
+                n.left = Node(n, value, center, self.canvas)
                 self.createLine(n, 'left', center)
                
                 if value < self.min: self.min = value
@@ -88,15 +92,15 @@ class BST:
                     self.moveLeft(self.root, value)
                     self.updateLines(self.root)
 
-                canvas.after(0, self.animationStep(n, 'green', ''))
-                canvas.after(500, self.animationStep(n.left, 'blue', 'Found empty node. Inserting ' + str(value)))
-                canvas.after(0, self.animationStep(n.left, 'green', ''))
-                canvas.after(500, self.animationStep(n, 'green', '')) 
+                self.canvas.after(0, self.animationStep(n, 'green', ''))
+                self.canvas.after(self.animationSpeed, self.animationStep(n.left, 'blue', 'Found empty node. Inserting ' + str(value)))
+                self.canvas.after(0, self.animationStep(n.left, 'green', ''))
+                self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
                 
             elif value >= n.value and n.right is None:
-                canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
+                self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
                 center = [n.center[0]+40, n.center[1]+40]
-                n.right = Node(n, value, center, canvas)
+                n.right = Node(n, value, center, self.canvas)
                 self.createLine(n, 'right', center)
 
                 if value > self.max: self.max = value
@@ -104,16 +108,33 @@ class BST:
                     self.moveRight(self.root, value)
                     self.updateLines(self.root)
 
-                canvas.after(0, self.animationStep(n, 'green', ''))
-                canvas.after(500, self.animationStep(n.right, 'blue', 'Found empty node. Inserting ' + str(value)))
-                canvas.after(0, self.animationStep(n.right, 'green', ''))
-                canvas.after(500, self.animationStep(n, 'green', ''))
+                self.canvas.after(0, self.animationStep(n, 'green', ''))
+                self.canvas.after(self.animationSpeed, self.animationStep(n.right, 'blue', 'Found empty node. Inserting ' + str(value)))
+                self.canvas.after(0, self.animationStep(n.right, 'green', ''))
+                self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
             else:
                 if value < n.value:
-                    canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
-                    canvas.after(500, self.animationStep(n, 'green', ''))
-                    self.insert(n.left, value, canvas)
+                    self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
+                    self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
+                    self.insert(n.left, value)
                 else:
-                    canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
-                    canvas.after(500, self.animationStep(n, 'green', ''))
-                    self.insert(n.right, value, canvas)
+                    self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
+                    self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
+                    self.insert(n.right, value)
+
+    def search(self, n, value):
+        if n is None:
+            self.canvas.after(self.animationSpeed, self.animationStep('', '', 'Node ' + str(value) + ' not found'))
+            return None
+        elif value == n.value:
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'blue', 'Found ' + str(value) + ' node'))
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', '')) 
+            return n
+        elif value < n.value:
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
+            return self.search(n.left, value)
+        else:
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
+            self.canvas.after(self.animationSpeed, self.animationStep(n, 'green', ''))
+            return self.search(n.right, value)

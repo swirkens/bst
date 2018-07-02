@@ -15,14 +15,22 @@ def scroll_move(event):
     canvas.scan_dragto(event.x, event.y, gain=1)
     moveUIback()
 
-def clicked() :
+def insertButtonClicked() :
     value = entryField.get()
     if value != '':
-        b.insert(b.root, int(value), canvas)
+        entryField.delete(0, END)
+        b.insert(b.root, int(value))
+
+def searchButtonClicked():
+    value = entryField.get()
+    if value != '':
+        entryField.delete(0, END)
+        b.search(b.root, int(value)) 
 
 def moveUIback():
-    insertButton.place(x=130, y=30)
-    entryField.place(x=50, y=30)
+    insertButton.place(x=25, y=35)
+    searchButton.place(x=25, y=65)
+    entryField.place(x=5, y=5)
     for i in range(0,9):
         labelList[i].place(x=5, y=580 - i*20)
 
@@ -44,14 +52,18 @@ for i in range(10):
 
 b = BST(canvas, addMessage)
 
-insertButton = Button(canvas, text ="Insert", command = clicked)
+insertButton = Button(canvas, text ="Insert", command = insertButtonClicked, width=10)
 insertButton.pack()
 
-entryField = Entry(canvas, width = 10, bd = 5)
+searchButton = Button(canvas, text = "Search", command = searchButtonClicked, width = 10)
+searchButton.pack()
+
+entryField = Entry(canvas, width = 20, bd = 5)
 entryField.pack()
 
 canvas.create_window(0,0, window = entryField)
 canvas.create_window(0,0, window = insertButton)
+canvas.create_window(0,0, window = searchButton)
 for i in range(0,9):
     canvas.create_window(0,0, window = labelList[i])
 moveUIback()
