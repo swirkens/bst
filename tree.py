@@ -1,55 +1,52 @@
-from time import sleep
-import threading
-
-def worker(n, tree, root, canvas):
-    n.color = 'green'
-    tree.draw(root, canvas)
-    print("Done")
-    return
-
 class Node:
-    def __init__(self, parent, value, left, right):
+    def __init__(self, parent, value, center, canvas):
         self.parent = parent
         self.value = value
-        self.left = left
-        self.right = right
-        self.center = None
-        self.color = 'green'
+        self.left = None
+        self.right = None
+        self.center = center
+
+        self.oval = canvas.create_oval(center[0]-20,center[1]-20,center[0]+20,center[1]+20,fill='green', width=2)
+        self.text = canvas.create_text(center[0],center[1],text=value)
+
+        self.leftLine = None
+        self.rightLine = None
 
 class BST:
     def __init__(self, canvas, function):
+        self.canvas = canvas
+        self.msgFunction = function
         self.root = None
         self.min = None
         self.max = None
-        self.queue = []
-        self.list = []
-        self.msgFunction = function
-        self.thread = threading.Timer(0.0, self.threadFunction, [canvas])
-        self.thread.start()
-        
+    
+    def animationStep(self, node, color, msg):
+        self.canvas.itemconfigure(node.oval, fill=color)
+        if msg: self.msgFunction(msg)
+        self.canvas.update()
 
+    def createLine(self, node, direction, childCenter):
+        if direction == 'left':
+            node.leftLine = self.canvas.create_line(node.center[0], node.center[1], childCenter[0], childCenter[1], width=2)
+            self.canvas.tag_lower(node.leftLine)
+        else:
+            node.rightLine = self.canvas.create_line(node.center[0], node.center[1], childCenter[0], childCenter[1], width=2)
+            self.canvas.tag_lower(node.rightLine)
 
-    def threadFunction(self, canvas):
-        while True:
-            if self.queue:
-                if self.queue[0][0] == 'paintNextRed':
-                    self.queue[0][1].color = 'green'
-                    self.queue[0][3].color = 'red'
-                elif self.queue[0][0] == 'paintRed':
-                    self.queue[0][1].color = 'red'
-                elif self.queue[0][0] == 'paintGreen':
-                    self.queue[0][1].color = 'green'
-                elif self.queue[0][0] == 'paintBlue':
-                    self.queue[0][1].color = 'blue'
-                if self.queue[0][2] != '':
-                        self.msgFunction(self.queue[0][2])
-                self.draw(self.root, canvas)
-                self.queue.pop(0)
-            sleep(0.4)
-
-    def move(self, n, value):
-        if value < n.value: self.moveLeft(n.left, value)
-        else: self.moveRight(n.right, value)
+    def updateLines(self, n):
+        if n:
+            self.updateLines(n.left)
+            self.updateLines(n.right)
+            if n.leftLine:
+                self.canvas.delete(n.leftLine)
+                childCenter = n.left.center
+                n.leftLine = self.canvas.create_line(n.center[0], n.center[1], childCenter[0], childCenter[1], width=2)
+                self.canvas.tag_lower(n.leftLine)
+            if n.rightLine:
+                self.canvas.delete(n.rightLine)
+                childCenter = n.right.center
+                n.rightLine = self.canvas.create_line(n.center[0], n.center[1], childCenter[0], childCenter[1], width=2)
+                self.canvas.tag_lower(n.rightLine)
 
     def moveLeft(self, n, value):
         if n:
@@ -57,62 +54,66 @@ class BST:
             self.moveLeft(n.right, value)
             if value > n.value:
                 n.center[0] -= 40
+                self.canvas.move(n.oval, -40, 0)
+                self.canvas.move(n.text, -40, 0)
 
     def moveRight(self, n, value):
         if n:
             self.moveRight(n.left, value)
             self.moveRight(n.right, value)
             if value < n.value:
-                n.center[0] += 40     
-
-    def draw(self, n, canvas):
-        if n == self.root: canvas.delete('all')
-        if n:
-            self.draw(n.left, canvas)
-            self.draw(n.right, canvas)
-            if n.parent:
-                parentCenter = n.parent.center
-                canvas.create_line(n.center[0],n.center[1],parentCenter[0],parentCenter[1], width=2)
-            canvas.create_oval(n.center[0]-20,n.center[1]-20,n.center[0]+20,n.center[1]+20,fill=n.color, width=2)
-            canvas.create_text(n.center[0],n.center[1],text=n.value)
+                n.center[0] += 40
+                self.canvas.move(n.oval, 40, 0)
+                self.canvas.move(n.text, 40, 0)
 
     def insert(self, n, value, canvas):
         if n is None:
-            n = Node(None, value, None, None)
+            center = [300, 50]
+            n = Node(None, value, center, canvas)
             self.root = n
             self.min = value
             self.max = value
-            n.center = [300, 50]
-            self.queue.append(('paintRed', n, 'Creating root node'))
-            self.queue.append(('paintBlue', n, ''))
-            self.queue.append(('paintGreen', n, ''))
+
+            canvas.after(500, self.animationStep(n, 'blue', 'Creating root node'))
+            canvas.after(500, self.animationStep(n, 'green', ''))
         else:
             if value < n.value and n.left is None:
-                self.queue.append(('paintRed', n, str(value) + ' < ' + str(n.value) + '? True. Going left'))
-                n.left = Node(n, value, None, None)
-                self.queue.append(('paintNextRed', n, '', n.left))
-                self.queue.append(('paintBlue', n.left, 'Found empty node. Inserting ' + str(value)))
-                self.queue.append(('paintGreen', n.left, ''))
-                parentCenter = n.center
-                n.left.center = [parentCenter[0]-40, parentCenter[1]+40]
+                canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
+                center = [n.center[0]-40, n.center[1]+40]
+                n.left = Node(n, value, center, canvas)
+                self.createLine(n, 'left', center)
+               
                 if value < self.min: self.min = value
-                else: self.moveLeft(self.root, value)
+                else:
+                    self.moveLeft(self.root, value)
+                    self.updateLines(self.root)
+
+                canvas.after(0, self.animationStep(n, 'green', ''))
+                canvas.after(500, self.animationStep(n.left, 'blue', 'Found empty node. Inserting ' + str(value)))
+                canvas.after(0, self.animationStep(n.left, 'green', ''))
+                canvas.after(500, self.animationStep(n, 'green', '')) 
+                
             elif value >= n.value and n.right is None:
-                self.queue.append(('paintRed', n, str(value) + ' < ' + str(n.value) + '? False. Going right'))
-                n.right = Node(n, value, None, None)
-                self.queue.append(('paintNextRed', n, '', n.right)) 
-                self.queue.append(('paintBlue', n.right, 'Found empty node. Inserting ' + str(value)))
-                self.queue.append(('paintGreen', n.right, ''))
-                parentCenter = n.center
-                n.right.center = [parentCenter[0]+40, parentCenter[1]+40]
+                canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
+                center = [n.center[0]+40, n.center[1]+40]
+                n.right = Node(n, value, center, canvas)
+                self.createLine(n, 'right', center)
+
                 if value > self.max: self.max = value
-                else: self.moveRight(self.root, value)
+                else:
+                    self.moveRight(self.root, value)
+                    self.updateLines(self.root)
+
+                canvas.after(0, self.animationStep(n, 'green', ''))
+                canvas.after(500, self.animationStep(n.right, 'blue', 'Found empty node. Inserting ' + str(value)))
+                canvas.after(0, self.animationStep(n.right, 'green', ''))
+                canvas.after(500, self.animationStep(n, 'green', ''))
             else:
                 if value < n.value:
-                    self.queue.append(('paintRed', n, str(value) + ' < ' + str(n.value) + '? True. Going right'))
-                    self.queue.append(('paintNextRed', n, '', n.left))
+                    canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? True. Going left'))
+                    canvas.after(500, self.animationStep(n, 'green', ''))
                     self.insert(n.left, value, canvas)
                 else:
-                    self.queue.append(('paintRed', n, str(value) + ' < ' + str(n.value) + '? False. Going right'))
-                    self.queue.append(('paintNextRed', n, '', n.right)) 
+                    canvas.after(500, self.animationStep(n, 'red', str(value) + ' < ' + str(n.value) + '? False. Going right'))
+                    canvas.after(500, self.animationStep(n, 'green', ''))
                     self.insert(n.right, value, canvas)
